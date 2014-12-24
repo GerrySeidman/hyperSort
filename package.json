@@ -1,0 +1,35 @@
+{
+  "name": "hyperSort",
+  "version": "0.0.0",
+  "description": "General Sorting",
+  "main": "index.js",
+  "scripts": {
+    "test": "test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "http://github.com/gerryseidman/hyperSort.git"
+  },
+  "keywords": [
+    "javascript",
+    "sort",
+    "filter"
+  ],
+  "devDependencies": {
+    "chai": "^1.10.0",
+    "grunt": "^0.4",
+    "grunt-cli": "^0.1",
+    "grunt-contrib-jshint": "^0.10",
+    "grunt-contrib-watch": "^0.6",
+    "grunt-jsbeautifier": "^0.2.7",
+    "grunt-mocha-test": "^0.10",
+    "jshint": "^2.5.0",
+    "mocha": "^1.17"
+  },
+  "author": "Gerry Seidman",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/gerryseidman/hyperSort/issues"
+  },
+  "homepage": "https://github.com/gerryseidman/hyperSort"
+}

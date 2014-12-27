@@ -77,7 +77,6 @@
                         }
                     }
 
-                    console.log("OUT OF ORDER, ABORT DUMP");
                     return;
                 }
             }
@@ -90,8 +89,8 @@
             var printed = 0;
             // var printing = false;
 
-            supressStatus = (supressStatus !== undefined) ? supressStatus : true;
-            unStableOK = (unStableOK !== undefined) ? unStableOK : true;
+            supressStatus = supressStatus || true;
+            unStableOK = unStableOK || true;
             var stableRequired = !unStableOK;
 
             console.log('Validating: ' + persons.length + ' - Stable' + (stableRequired ? '' : ' Not') + ' Required');

@@ -1,0 +1,57 @@
+
+			n = 1*1000*1000;
+			var a = new Array(n);
+			var b = new Array(n);
+			var c = new Array(n);
+
+
+			for (var i=0; i<n; i++) {
+				a[i] = { last: Math.random(), __i: i, __sav: 0.0 };
+				b[i] = a[i];
+				c[i] = a[i];
+			}
+
+			console.log("A: " + a.length);
+
+			var rTest = function(arr) {}
+
+			t = gsUtils.newTimer();
+			quicksort(a, 'last');
+			t.log('unstable done');
+			stableQuicksort(b, 'last');
+			t.log('stable ')
+			var col = 'last';
+			var count = 0;
+
+			var mk = function(v, col) {
+				var o = null;
+				for (var i=0; i < v.length; i++) {
+					// o = v[i];
+
+					// if (o) {
+					// 	count++;
+					// 	o.__sav = o.last;
+					// }
+
+					v[i].__save== i;//v[i].last;
+				}
+
+
+				return count
+			}
+
+			// t.log('prepNative');
+			// mk(c, 'last');
+
+			t.log('Native Prepped ' + count);
+
+			c.sort(function(a,b) {
+				if (a.last === b.last) {
+					return a.__i -b.__i;
+				} else if (a.last < b.last) {
+					return -1;
+				} else {
+					return 1;
+				}
+			});
+			t.log('Native complete')

@@ -1,0 +1,34 @@
+
+HyperSort Performance
+
+	Initial Quicksort 
+		2 values in sssswwwww
+			gsUtils.js:Making People: 480000
+			gsUtils.js:31 People Creation Complete: 322
+			gsUtils.js:31 People Sorted: 540
+			testUtils.js:83 Validating: 480000 - Stable Not Required
+			testUtils.js:95 240000: 321000: Seidman Harpo
+			testUtils.js:113 480000: 81000: Wirts Harpo
+			testUtils.js:114 Valid
+
+			Note Best time, typically around 600ms
+
+		8 value random
+
+			gsUtils.js:16 Making People: 480000
+			gsUtils.js:35 People Creation Complete: 353
+			gsUtils.js:35 People Sorted: 617 (diff: 264)
+
+		All Different (random)
+
+			gsUtils.js:16 Making People: 480000
+			gsUtils.js:35 People Creation Complete: 2150
+			gsUtils.js:35 People Sorted: 4051 (diff: 1901)
+
+			Note times typically ~2300ms
+
+		File Backed up as hyperSort.js-InitialQuicksort
+
+
+Started Redoing at 4:45PM
+

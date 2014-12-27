@@ -1,15 +1,28 @@
 (function(exports) {
 
     exports.quicksort = function(rows, colName) {
+        var isStable = false;
+
+        stablizableQuicksort(rows, colName, isStable);
+    };
+
+    exports.stableQuicksort = function(rows, colName) {
+        var isStable = true;
+
+        stablizableQuicksort(rows, colName, isStable);
+    };
+
+
+    function stablizableQuicksort(rows, colName, isStable) {
 
         var sort = quicksort_by(function(d) {
             return d[colName];
-        });
+        }, isStable);
 
         markIndices(rows);
 
         sort(rows, 0, rows.length);
-    };
+    }
 
     function markIndices(rows) {
         for (var i = 0; i < rows.length; i++) {
@@ -17,35 +30,102 @@
         }
     }
 
-    function insertionsort_by(f) {
+    // quicksort.by = quicksort_by;
+
+    function insertionsort_by(f, isStable) {
+
+        var gt = function(f) {
+            return function(x1, x2, e1, e2) {
+                if (x1 > x2) {
+                    return true;
+                } else if (isStable && (x1 === x2)) { // ((x1 >= x2) && (x2 >= x1)) { // Need Coersion because == and === do not force Object.prototype.valueOf()
+                    return (e1.__i > e2.__i);
+                } else {
+                    return false;
+                }
+            };
+        }();
 
         function insertionsort(a, lo, hi) {
+            // console.log('IN INSERT: ' + lo + ' ' + hi);
+
             for (var i = lo + 1; i < hi; ++i) {
-                for (var j = i, t = a[i], x = f(t); j > lo && f(a[j - 1]) > x; --j) {
+                var j = i,
+                    t = a[i],
+                    x = f(t);
+                for (; j > lo && gt(f(a[j - 1]), x, a[j - 1], t); --j) {
                     a[j] = a[j - 1];
                 }
                 a[j] = t;
             }
+
+            // for (i = lo; i < hi; i++) {
+            //     console.log('insCheck[' + i + ']: ' + a[i]);
+            // }
             return a;
         }
 
         return insertionsort;
     }
 
+    function quicksort_by(f, isStable) {
 
-    function quicksort_by(f) {
-        var insertionsort = insertionsort_by(f);
+        var insertionSort = insertionsort_by(f, isStable);
 
-        var quicksort_sizeThreshold = 32;
+        var gt = function(f) {
+            return function(x1, x2, e1, e2) {
+                if (x1 > x2) {
+                    return true;
+                } else if (isStable && (x1 === x2)) { // ((x1 >= x2) && (x2 >= x1)) { // Need Coersion because == and === do not force Object.prototype.valueOf()
+                    return (e1.__i > e2.__i);
+                } else {
+                    return false;
+                }
+            };
+        }();
+
+        var lt = function(f) {
+            return function(x1, x2, e1, e2) {
+                if (x1 < x2) {
+                    return true;
+                } else if (isStable && (x1 === x2)) { // ((x1 >= x2) && (x2 >= x1)) { // Need Coersion because == and === do not force Object.prototype.valueOf()
+                    return (e1.__i < e2.__i);
+                } else {
+                    return false;
+                }
+
+            };
+        }();
+
+        var eq = function(f) {
+            return function(x1, x2, e1, e2) {
+                if (!(gt(x1, x2, e1, e2) || lt(x1, x2, e1, e2))) {
+                    // return true;
+                    if (isStable) {
+                        return (e1.__i < e2.__i);
+                    } else {
+                        return true;
+                    }
+                } else {
+                    return false;
+                }
+            };
+        }();
+
 
         function sort(a, lo, hi) {
-            var needsInsertSort = (hi - lo < quicksort_sizeThreshold);
-            var sortType = needsInsertSort ? insertionsort : quicksort;
+            // console.log('Sort: ' + lo + ' ' + hi);
+            var needsInsertionSort = (hi - lo < quicksort_sizeThreshold);
+            if (needsInsertionSort) {
+                return insertionSort(a, lo, hi);
+            } else {
+                return quicksort(a, lo, hi);
+            }
 
-            return sortType(a, lo, hi);
         }
 
         function quicksort(a, lo, hi) {
+            // continuesole.log('IN Quick: ' + lo + ' ' + hi);
             // Compute the two pivots by looking at 5 elements.
             var sixth = (hi - lo) / 6 | 0,
                 i1 = lo + sixth,
@@ -67,11 +147,8 @@
 
             var t;
 
-            var k, ek;
-
-            var lessValue, greatValue;
             // Sort the selected 5 elements using a sorting network.
-            if (x1 > x2) {
+            if (gt(x1, x2, e1, e2)) {
                 t = e1;
                 e1 = e2;
                 e2 = t;
@@ -79,7 +156,7 @@
                 x1 = x2;
                 x2 = t;
             }
-            if (x4 > x5) {
+            if (gt(x4, x5, e4, e5)) {
                 t = e4;
                 e4 = e5;
                 e5 = t;
@@ -87,7 +164,7 @@
                 x4 = x5;
                 x5 = t;
             }
-            if (x1 > x3) {
+            if (gt(x1, x3, e1, e3)) {
                 t = e1;
                 e1 = e3;
                 e3 = t;
@@ -95,7 +172,7 @@
                 x1 = x3;
                 x3 = t;
             }
-            if (x2 > x3) {
+            if (gt(x2, x3, e2, e3)) {
                 t = e2;
                 e2 = e3;
                 e3 = t;
@@ -103,7 +180,7 @@
                 x2 = x3;
                 x3 = t;
             }
-            if (x1 > x4) {
+            if (gt(x1, x4, e1, e4)) {
                 t = e1;
                 e1 = e4;
                 e4 = t;
@@ -111,7 +188,7 @@
                 x1 = x4;
                 x4 = t;
             }
-            if (x3 > x4) {
+            if (gt(x3, x4, e3, e4)) {
                 t = e3;
                 e3 = e4;
                 e4 = t;
@@ -119,7 +196,7 @@
                 x3 = x4;
                 x4 = t;
             }
-            if (x2 > x5) {
+            if (gt(x2, x5, e2, e5)) {
                 t = e2;
                 e2 = e5;
                 e5 = t;
@@ -127,7 +204,7 @@
                 x2 = x5;
                 x5 = t;
             }
-            if (x2 > x3) {
+            if (gt(x2, x3, e2, e3)) {
                 t = e2;
                 e2 = e3;
                 e3 = t;
@@ -135,7 +212,7 @@
                 x2 = x3;
                 x3 = t;
             }
-            if (x4 > x5) {
+            if (gt(x4, x5, e4, e5)) {
                 t = e4;
                 e4 = e5;
                 e5 = t;
@@ -160,10 +237,16 @@
             var less = lo + 1, // First element in the middle partition.
                 great = hi - 2; // Last element in the middle partition.
 
+            var greatValue, lessValue, // temp var
+                greatElt, lessElt,
+                k, // looping var
+                ek, xk; // temp var
+
             // Note that for value comparison, <, <=, >= and > coerce to a primitive via
             // Object.prototype.valueOf; == and === do not, so in order to be consistent
             // with natural order (such as for Date objects), we must do two compares.
-            var pivotsEqual = pivotValue1 <= pivotValue2 && pivotValue1 >= pivotValue2;
+            // NOTE: In the Stable implemntation this pivotsEqual is always FALSE
+            var pivotsEqual = eq(pivotValue1, pivotValue2, pivot1, pivot2); // This will always be false for    
             if (pivotsEqual) {
 
                 // Degenerated case where the partitioning becomes a dutch national flag
@@ -183,13 +266,13 @@
                 for (k = less; k <= great; ++k) {
                     ek = a[k];
                     xk = f(ek);
-                    if (xk < pivotValue1) {
+                    if (lt(xk, pivotValue1, ek, pivot1)) {
                         if (k !== less) {
                             a[k] = a[less];
                             a[less] = ek;
                         }
                         ++less;
-                    } else if (xk > pivotValue1) {
+                    } else if (gt(xk, pivotValue1, ek, pivot1)) {
 
                         // Find the first element <= pivot in the range [k - 1, great] and
                         // put [:ek:] there. We know that such an element must exist:
@@ -199,13 +282,14 @@
                         // short amount of time. The invariant will be restored when the
                         // pivots are put into their final positions.
                         while (true) {
+                            greatElt = a[great];
                             greatValue = f(a[great]);
-                            if (greatValue > pivotValue1) {
+                            if (gt(greatValue, pivotValue1, greatElt, pivot1)) {
                                 great--;
                                 // This is the only location in the while-loop where a new
                                 // iteration is started.
                                 continue;
-                            } else if (greatValue < pivotValue1) {
+                            } else if (lt(greatValue, pivotValue1, greatElt, pivot1)) {
                                 // Triple exchange.
                                 a[k] = a[less];
                                 a[less++] = a[great];
@@ -243,17 +327,18 @@
                 for (k = less; k <= great; k++) {
                     ek = a[k];
                     xk = f(ek);
-                    if (xk < pivotValue1) {
+                    if (lt(xk, pivotValue1, ek, pivot1)) {
                         if (k !== less) {
                             a[k] = a[less];
                             a[less] = ek;
                         }
                         ++less;
                     } else {
-                        if (xk > pivotValue2) {
+                        if (gt(xk, pivotValue2, ek, pivot2)) {
                             while (true) {
+                                greatElt = a[great];
                                 greatValue = f(a[great]);
-                                if (greatValue > pivotValue2) {
+                                if (gt(greatValue, pivotValue2, greatElt, pivot2)) {
                                     great--;
                                     if (great < k) break;
                                     // This is the only location inside the loop where a new
@@ -261,7 +346,7 @@
                                     continue;
                                 } else {
                                     // a[great] <= pivot2.
-                                    if (greatValue < pivotValue1) {
+                                    if (lt(greatValue, pivotValue1, greatElt, pivot1)) {
                                         // Triple exchange.
                                         a[k] = a[less];
                                         a[less++] = a[great];
@@ -309,9 +394,31 @@
             // The Android source however removes the pivot elements from the recursive
             // call if the second partition is too large (more than 2/3 of the list).
             if (less < i1 && great > i5) {
+                // while ((lessValue = f(a[less])) <= pivotValue1 && lessValue >= pivotValue1) ++less;
+                // while ((greatValue = f(a[great])) <= pivotValue2 && greatValue >= pivotValue2) --great;
 
-                while ((lessValue = f(a[less])) <= pivotValue1 && lessValue >= pivotValue1) ++less;
-                while ((greatValue = f(a[great])) <= pivotValue2 && greatValue >= pivotValue2) --great;
+                for (;;) {
+                    lessElt = a[less];
+                    lessValue = f(a[less]);
+
+                    if (eq(lessValue, pivotValue1, lessElt, pivot1)) {
+                        ++less;
+                    } else {
+                        break;
+                    }
+                }
+
+                for (;;) {
+                    greatElt = a[great];
+                    greatValue = f(a[great]);
+
+                    if (eq(greatValue, pivotValue2, greatElt, pivot2)) {
+                        --great;
+                    } else {
+                        break;
+                    }
+                }
+
 
                 // Copy paste of the previous 3-way partitioning with adaptions.
                 //
@@ -332,17 +439,18 @@
                 for (k = less; k <= great; k++) {
                     ek = a[k];
                     xk = f(ek);
-                    if (xk <= pivotValue1 && xk >= pivotValue1) {
+                    if (eq(xk, pivotValue1, ek, pivot1)) {
                         if (k !== less) {
                             a[k] = a[less];
                             a[less] = ek;
                         }
                         less++;
                     } else {
-                        if (xk <= pivotValue2 && xk >= pivotValue2) {
+                        if (eq(xk, pivotValue2, ek, pivot2)) {
                             while (true) {
+                                greatElt = a[great];
                                 greatValue = f(a[great]);
-                                if (greatValue <= pivotValue2 && greatValue >= pivotValue2) {
+                                if (eq(greatValue, pivotValue2, greatElt, pivot2)) {
                                     great--;
                                     if (great < k) break;
                                     // This is the only location inside the loop where a new
@@ -350,7 +458,7 @@
                                     continue;
                                 } else {
                                     // a[great] < pivot2.
-                                    if (greatValue < pivotValue1) {
+                                    if (lt(greatValue, pivotValue1, greatElt, pivot1)) {
                                         // Triple exchange.
                                         a[k] = a[less];
                                         a[less++] = a[great];
@@ -386,5 +494,7 @@
 
         return sort;
     }
+
+    var quicksort_sizeThreshold = 32;
 
 })(typeof exports !== 'undefined' && exports || this);

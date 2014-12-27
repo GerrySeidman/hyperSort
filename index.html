@@ -1,0 +1,87 @@
+<html>
+	<head>
+		<script src="test/gsUtils.js"></script>
+		<script src="test/testUtils.js"></script>
+		<script src="src/hyperSort.js"></script>
+		<script>
+			var dump = function(title) { 
+				console.log(title + ": " + persons.length);
+				for(var i=0; i < persons.length; i++) {
+					console.log(persons[i].toString());
+				}
+			}
+			var scale = 10 * 1000;
+			var numPeople = 48 * scale;
+
+			console.log('Making People: ' + numPeople);
+	
+			var test = function(title, twoValue, rand, isStable) {
+				var timer = gsUtils.newTimer();
+
+				console.log("Test: " + title);
+
+				persons = peopleMaker.makePeople(numPeople);
+
+				var half = persons.length/2;
+
+				for(var i=0; i < persons.length; i++) {
+					if (twoValue) {
+						if (i < half) {
+							persons[i].last = 'Wirts';
+						} else {
+							persons[i].last =  'Seidman';
+						}
+					} else if (rand) {
+						persons[i].last = 'a'+Math.random()+'b';
+					}
+				}
+
+				timer.log('People Creation Complete');
+
+
+				if (isStable) {
+					stableQuicksort(persons, 'last');
+				} else {
+					quicksort(persons, 'last');
+				}
+
+				timer.log('People Sorted');
+				var valid = true;
+				var supressStatus = false;	// For Debugging
+				valid &= peopleMaker.validate(persons, true);
+				if (isStable) {
+					valid &= peopleMaker.validate(persons, false);
+				}
+
+				return valid;
+			}
+
+			function testSuite(isStable) {
+				console.log("Executing Test Suite using " + ((isStable) ? 'STABLE' : 'UNSTABLE') + ' Sort');
+				if (!(
+							test('Many Wirts followed by Many Seidman', true, false, isStable) 
+						&& 	test('From Eight Random Names', 			false, false, isStable)
+						&& 	test('All Different and Random', 			false, true, isStable))
+					) {
+
+					console.log('ERRORS FOUND *******************');
+					console.log('ERRORS FOUND *******************');
+					console.log('ERRORS FOUND *******************');
+					return false;
+				} else {
+					console.log('ALL GOOD');
+					console.log('ALL GOOD');
+					console.log('ALL GOOD');
+					return true;
+				}
+			}
+
+			testSuite(false);	// Regular Quicksort
+			testSuite(true);	// Stable QuickSort
+
+		</script>
+	</head>
+	<body>
+		
+	</body>
+</html>

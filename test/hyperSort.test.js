@@ -7,10 +7,12 @@ var hypersort = require('../src/hypersort');
 
 var utils = require('./testUtils');
 
-describe('The Config component', function() {
+describe('Testing QuickSort', function() {
 
-    describe('object instance', function() {
-        it('should have the following shape', function() {
+    describe('Eat array of nulls', function() {
+        it('should complete without errors', function() {
+            // var persons = utils.peopleMaker.makePeople(10);
+            // utils.quicksort.sort(persons, 'last');
             assert.equal('foo', 'foo');
         });
     });

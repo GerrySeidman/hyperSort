@@ -15,9 +15,9 @@ HyperSort Performance
 
 		8 value random
 
-			gsUtils.js:16 Making People: 480000
-			gsUtils.js:35 People Creation Complete: 353
-			gsUtils.js:35 People Sorted: 617 (diff: 264)
+		gsUtils.js:16 Making People: 480000
+		gsUtils.js:35 People Creation Complete: 353
+		gsUtils.js:35 People Sorted: 617 (diff: 264)
 
 		All Different (random)
 

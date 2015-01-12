@@ -2,86 +2,266 @@
 	<head>
 		<script src="test/gsUtils.js"></script>
 		<script src="test/testUtils.js"></script>
+		<script src="src/smallCross.js"></script>
 		<script src="src/hyperSort.js"></script>
 		<script>
-			var dump = function(title) { 
-				console.log(title + ": " + persons.length);
-				for(var i=0; i < persons.length; i++) {
-					console.log(persons[i].toString());
-				}
+
+	var actionQueue = [];	// DOM modifying  Actions to be done in separate sequential calls.
+
+	var log = function(message) {
+		var a =document.querySelector('#log');
+		a.insertAdjacentText('beforeEnd', '\n' + message);
+		// console.log(message);
+	}
+
+	var clearActions = function() {
+		log('Stopped...');
+		actionQueue.length = 0;
+	}
+
+	var clearLog = function() {
+		var a = document.querySelector('#log');
+		a.textContent = '';
+	}
+
+	var logAction = function(message) {		// Post a log message to the queue
+		actionQueue.push(function() {
+			log(message);
+		});
+	};
+
+	var postAction = function(f) {		// Post an action to the queue
+		actionQueue.push(f);
+	};
+
+	var executeActionQueue = function() {
+		if (actionQueue.length != 0) {
+			setTimeout(function() {
+				var f = actionQueue.shift()
+				f();
+				executeActionQueue();
+			}, 0);
+		}
+	}
+
+    // var crossSort = hypersort.fasterQuicksort.quicksort.by(function(d) {
+    //     return d[colName];
+    // });
+
+    function markIndices(rows) {
+        for (var i = 0; i < rows.length; i++) {
+            rows[i].__i = i;
+        }
+    }
+
+	var temp = [];
+
+	var moveToTemp = function(arr) {
+		if (arr.length !== temp.length) {
+			temp = new Array(arr.length);
+		}
+
+		for (var i=0; i < arr.length; i++) {
+			temp[i] = arr[i];
+		}
+
+		return temp;
+	}
+
+
+	var crossTest = function(message, rows, colName) {
+		var data = moveToTemp(rows);
+
+	    var s = '(function(d) { return d.' + colName + '; })';
+			var f = eval(s); // jshint ignore:line
+		var crossSort = hypersort.fasterQuicksort(f);
+
+			var timer = gsUtils.newTimer();
+		crossSort(data, 0, data.length);
+
+		var duration = timer.getDuration();
+		var valid = peopleMaker.validate(data, colName, false, false)
+		log('\t\t' + (valid ? 'PASS' : 'FAIL') + '\tSort time:  ' + duration + 'ms   ' + '\t' + message + '\tn= ' + data.length);
+
+	}
+
+	var runCrossTest = function(dataSets, colName) {
+		logAction('Original Cross Filter on ' + colName);
+		// crossTest('8-val',misVal, colName);
+		// crossTest('twoVal', twoVal, colName);
+		// crossTest('rand', rand, colName);
+		for (var i=0; i < dataSets.length; i++) {
+			var dataSet = dataSets[i];
+			// crossTest(dataSet.name, dataSet.data, colName);
+			postAction(crossTest.bind(null, dataSet.name, dataSet.data, colName));
+
+		}
+	};
+
+	var sortTest = function(message, rows, sort, colName, isStable) {
+		var data = moveToTemp(rows);
+
+		var timer = gsUtils.newTimer();
+		sort(data, colName);
+		var duration = timer.getDuration();
+		var valid = peopleMaker.validate(data, colName, isStable, false)
+		log('\t\t' + (valid ? 'PASS' : 'FAIL') + '\tSort time:  ' + duration + 'ms    ' + '\t' + message + '\tn= ' + data.length);
+	};
+
+
+
+	var reverseResults = [];
+
+	var stableReverseTest = function(message, rows, colName) {
+		var duration = 0;
+		var data = rows;
+		var valid = false;
+		reverseResults.push('\t\t' + (valid ? 'PASS' : 'UNDONE') + '\tSort time:  ' + duration + 'ms    ' + '\t' + message + '\tn= ' + data.length);
+	};
+
+	var runSortTest = function(sortType, dataSets, colName, isPerformReverseTest) {
+		logAction(sortType.name + ' on ' + colName);
+
+		if (isPerformReverseTest) {
+			postAction(function() { reverseResults.length = 0; });
+		}
+
+		for (var i=0; i < dataSets.length; i++) {
+			var dataSet = dataSets[i];
+			var sort = sortType.sortFunction;
+			var isStable = sortType.isStable
+			postAction(sortTest.bind(null, dataSet.name, dataSet.data, sort, colName, isStable));
+
+			if (isPerformReverseTest) {
+				postAction(stableReverseTest.bind(null, dataSet.name, dataSet.data, colName));
 			}
-			var scale = 10 * 1000;
-			var numPeople = 48 * scale;
+		}
 
-			console.log('Making People: ' + numPeople);
-	
-			var test = function(title, twoValue, rand, isStable) {
-				var timer = gsUtils.newTimer();
+		if (isPerformReverseTest) {
+			postAction(function() {
+				log('Stable Reverse Sort on colName: ' + colName);
+				for(var i=0; i < reverseResults.length; i++) {
+					log(reverseResults[i]);
+				}
+				reverseResults.length = 0;
+			});
+		}
 
-				console.log("Test: " + title);
+	};
 
-				persons = peopleMaker.makePeople(numPeople);
 
-				var half = persons.length/2;
+	var makePeople = function(numPeople, dataSets) {
+		for(var i=0; i < dataSets.length; i++) {
+			dataSets[i].data = dataSets[i].factory(numPeople);
+			// markIndices(dataSets[i].data);
+		}
 
-				for(var i=0; i < persons.length; i++) {
-					if (twoValue) {
-						if (i < half) {
-							persons[i].last = 'Wirts';
-						} else {
-							persons[i].last =  'Seidman';
-						}
-					} else if (rand) {
-						persons[i].last = 'a'+Math.random()+'b';
+		// timer.log('Made ' +dataSets.length + ' sets of People: ' + numPeople);
+	}
+
+
+
+	var queueActions = function() {
+		clearActions();
+		clearLog();
+
+ 		var numPeople = document.getElementById("n").value;
+		var colNames = ['textValue', 'numericValue', 'dateValue', 'numericAbsoluteValue'];
+
+		var dataSets = [ {
+				name: '8-val random',
+				factory: peopleMaker.makeTwoValuedPeople,
+			}, {
+				name: 'two-val stacked',
+				factory: peopleMaker.makeDistinctValuedPeople,
+			}, {
+				name: 'All Random',
+				factory: peopleMaker.makeDistinctValuedPeople,
+			}
+		];
+
+		log('Running Test and Timing Suite,  n= ' + numPeople);
+		log(' generating datasets ...');
+
+		postAction(makePeople.bind(null,numPeople, dataSets));
+		logAction('Datasets generated');
+
+		postAction(function() {
+		    var sortTypes = hypersort.getSortTypes();
+
+		    var isFirstStable = true;
+
+			for (var i=0; i < colNames.length; i++) {
+				var colName = colNames[i];
+				if (document.querySelector('[value=' + colName + ']').checked) {
+					if (colName === 'numericAbsoluteValue') {
+						colName = 'numericValue';
+						subType = 'absoluteValue';
+						logAction('Numeric Absolute Value NOT IMPLEMENTED YET');
+						continue;
 					}
-				}
+					logAction('Test Series for colName: ' + colName);
 
-				timer.log('People Creation Complete');
+					for (var j=0; j < sortTypes.length; j++) {
+				    	var sortType = sortTypes[j];
 
+				    	var runReverseTest = false;
+				    	var isStable = sortType.isStable;
 
-				if (isStable) {
-					stableQuicksort(persons, 'last');
-				} else {
-					quicksort(persons, 'last');
-				}
+				    	if (isStable && isFirstStable) {
+				    		runReverseTest = true;
+				    		isFirstStable = false;
+				    	}
 
-				timer.log('People Sorted');
-				var valid = true;
-				var supressStatus = false;	// For Debugging
-				valid &= peopleMaker.validate(persons, true);
-				if (isStable) {
-					valid &= peopleMaker.validate(persons, false);
-				}
-
-				return valid;
-			}
-
-			function testSuite(isStable) {
-				console.log("Executing Test Suite using " + ((isStable) ? 'STABLE' : 'UNSTABLE') + ' Sort');
-				if (!(
-							test('Many Wirts followed by Many Seidman', true, false, isStable) 
-						&& 	test('From Eight Random Names', 			false, false, isStable)
-						&& 	test('All Different and Random', 			false, true, isStable))
-					) {
-
-					console.log('ERRORS FOUND *******************');
-					console.log('ERRORS FOUND *******************');
-					console.log('ERRORS FOUND *******************');
-					return false;
-				} else {
-					console.log('ALL GOOD');
-					console.log('ALL GOOD');
-					console.log('ALL GOOD');
-					return true;
+				    	runSortTest(sortType, dataSets, colName, runReverseTest);
+				    }
 				}
 			}
+		});
 
-			testSuite(false);	// Regular Quicksort
-			testSuite(true);	// Stable QuickSort
 
-		</script>
+		executeActionQueue();
+	}
+
+    // window.addEventListener("load", queueActions, false);
+
+    // rows = peopleMaker.makeTwoValuedPeople(7);
+    //  for (var i=0; i < rows.length; i++) {
+    // 	console.log(rows[i].toString());
+    // }
+
+    // hypersort.quicksort(rows, 'last');
+    //     console.log('...');
+
+    //  for (var i=0; i < rows.length; i++) {
+    // 	console.log(rows[i].toString());
+    // }
+
+    // hypersort.stableReverse(rows, 'last');
+    // console.log('...');
+
+    //  for (var i=0; i < rows.length; i++) {
+    // 	console.log(rows[i].toString());
+    // }
+
+    // var rowManager = createRowManager(rows);
+
+
+	</script>
 	</head>
 	<body>
-		
+	TODO: Absolute Value, Finish RowsManager
+		<P>Type(s):             
+		<input type="checkbox" name="sortValue" value="textValue" checked> textValue
+        <input type="checkbox" name="sortValue" value="numericValue" > numericValue
+        <input type="checkbox" name="sortValue" value="dateValue" > dateValue
+        <input type="checkbox" name="sortValue" value="numericAbsoluteValue" > numericAbsoluteValue
+  		<P>N: <input type="text" id="n" value="50" size="6">
+		<input type="checkbox" name="best" value="bestChoice" checked > Only Show Best Choice
+
+		 <P><input type="button" onclick="queueActions()" value="Execute"></input>
+		 <input type="button" onclick="clearActions()" value="Stop"></input>
+
+		<pre id="log"> </pre>
 	</body>
 </html>
